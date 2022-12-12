@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionController } from './controllers/transaction.controller';
@@ -13,6 +14,9 @@ import { UserPinModule } from '../userpin/userpin.module';
 import { SharedModule } from '../shared/shared.module';
 import { AccountModule } from '../account/account.module';
 
+import { NotificationModule } from './../notifications/notification.module';
+import { NotificationService } from '../notifications/services/notification.service';
+
 export const Entities = [
   TransactionEntity,
   PaymentMethodEntity,
@@ -27,9 +31,10 @@ export const Entities = [
     UserPinModule,
     SharedModule,
     AccountModule,
+   
   ],
   controllers: [TransactionController, CallBackController],
-  providers: [TransactionService, HttpRequestService],
+  providers: [TransactionService, HttpRequestService,NotificationService],
   exports: [TypeOrmModule.forFeature(Entities), TransactionService],
 })
 export class TransactionModule {}

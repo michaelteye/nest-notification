@@ -48,7 +48,7 @@ export class UserPinService {
     @InjectEntityManager('default') private em: EntityManager,
     private passwordHash: PasswordEncoderService,
     private smsService: SmsService, //private authService: AuthService,
-  ) {}
+  ) { }
 
   async createUserPin(request: UserPinDto): Promise<PinResponseDto> {
     try {

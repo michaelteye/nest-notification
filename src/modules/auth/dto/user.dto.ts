@@ -54,7 +54,7 @@ export class UserDto {
   phone_number?: string;
 
   @ValidateIf((v) => !v.phone && v.email)
-  @IsEmail()
+   @IsEmail()
   @ApiProperty({
     description: 'email is optional when phone number is passed',
     example: 'example@gmail.com',

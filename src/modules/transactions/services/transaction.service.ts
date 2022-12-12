@@ -20,6 +20,7 @@ import { AccountEntity } from '../../account/entities/account.entity';
 import { UserPinService } from 'src/modules/userpin/services/userpin.service';
 import { TransactionHistory } from '../types/transaction-history.type';
 import { AccountService } from '../../account/services/account.service';
+import { NotificationService } from 'src/modules/notifications/services/notification.service';
 
 @Injectable()
 export class TransactionService extends HttpRequestService {
@@ -40,7 +41,10 @@ export class TransactionService extends HttpRequestService {
 
     private accountService: AccountService,
 
-    private em: EntityManager,
+    private notificationService: NotificationService,
+
+    private em: EntityManager
+
   ) {
     super();
   }
@@ -66,6 +70,7 @@ export class TransactionService extends HttpRequestService {
     input: DepositInputDto,
     type?: TRANSACTION_TYPE,
   ): Promise<any> {
+    console.log("input", input)
     if (!input.verificationId)
       throw new HttpException('Verification Id is required', 400);
     await this.userPinService.verifyId(input.verificationId);
@@ -86,6 +91,7 @@ export class TransactionService extends HttpRequestService {
       const phoneData = paymentMethod.phone as PhoneIdentityEntity;
       const network = paymentMethod.network.toUpperCase();
       const paymentMode = network === 'airteltigo' ? 'ARITEL_TIGO' : network;
+
       const depositWithdrawalResponse = await this.initiateDepositWithdrawal(
         phoneData.phone,
         input.amount,
@@ -102,6 +108,15 @@ export class TransactionService extends HttpRequestService {
 
         transaction.senderPhone = phoneData.phone;
         await this.transactionRepository.save(transaction);
+
+        // await this.notificationService.sendSMSEmail({
+        //   to:phoneData.phone,
+        //   sms:"new message",
+        //   subject:`Bezo Susu: Transaction notification - ${new Date().toISOString().split("T")[0]} `,
+        //   message:'new message',
+        //   toemail: ctx.authUser.emailIdentity.email,
+        //   template:'',
+        // })
         return depositWithdrawalResponse;
       }
       throw new HttpException(depositWithdrawalResponse, 400);
@@ -156,9 +171,8 @@ export class TransactionService extends HttpRequestService {
     type: TRANSACTION_TYPE,
     paymentMode: string,
   ) {
-    const url = `${this.cfg.payment.url}/${
-      type === TRANSACTION_TYPE.CREDIT ? 'debit' : 'credit'
-    }`;
+    const url = `${this.cfg.payment.url}/${type === TRANSACTION_TYPE.CREDIT ? 'debit' : 'credit'
+      }`;
     console.log('environment', process.env.NODE_ENV);
     const data = {
       phoneNumber: process.env.NODE_ENV === 'test' ? '233542853417' : phone,
@@ -251,7 +265,7 @@ export class TransactionService extends HttpRequestService {
     accountTransaction.transactionId = transaction.id;
     accountTransaction.transferStatus =
       transaction.accountId &&
-      transaction.transactionType === TRANSACTION_TYPE.CREDIT
+        transaction.transactionType === TRANSACTION_TYPE.CREDIT
         ? TransferStatus.PENDING
         : TransferStatus.NOT_AVAILABLE;
     accountTransaction.currentBalance = Number(
@@ -348,7 +362,7 @@ export class TransactionService extends HttpRequestService {
     accountTransaction.referenceId = input.reference;
     accountTransaction.transferStatus = input.transferStatus;
 
-   // console.log('accountTransaction', accountTransaction);
+    // console.log('accountTransaction', accountTransaction);
     await this.accountTransactionRepository.insert(accountTransaction);
   }
 

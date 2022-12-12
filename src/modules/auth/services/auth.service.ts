@@ -106,7 +106,7 @@ export class AuthService<
     public smsService: SmsService,
     private fileService: FileUploadService,
     @Inject(globalConfig.KEY) private config: ConfigType<typeof globalConfig>,
-  ) {}
+  ) { }
 
   async resetPassword(input: ResetPasswordDto) {
     await this.validateEmailPhoneInput(input);
@@ -152,14 +152,19 @@ export class AuthService<
   ): Promise<LoginOutput> {
     let identity: PhoneIdentityInterface | EmailIdentityInterface;
 
-    if (input.phone)
+    if (input.phone) {
       identity = (await this.phoneProvider.retrieveIdentity(
         input.phone,
       )) as PhoneIdentity;
-    if (input.email)
+
+    }
+    else if (input.email) {
       identity = (await this.emailProvider.retrieveIdentity(
         input.email,
       )) as EmailIdentity;
+    }
+
+    console.log("identity ident", identity)
 
     if (!identity) {
       throw new BadRequestException('missing_identity');
@@ -282,10 +287,13 @@ export class AuthService<
       ...(verifyType && { verificationType: verifyType }),
       status: OTP_STATUS.verified,
     };
+
+    console.log("query", query)
     const verifyStatus = await this.em.findOne(OtpEntity, {
       where: query,
       order: { createdAt: 'DESC' },
     });
+    console.log("verifyStatus", verifyStatus)
     return verifyStatus;
   }
 
@@ -326,6 +334,8 @@ export class AuthService<
       phone = await this.em.findOne(PhoneIdentityEntity, {
         where: { phone: input.phone },
       });
+
+
       if (!phone) throw new BadRequestException('missing_identity');
 
       phone.status = STATUS.active;
